@@ -1,0 +1,48 @@
+---
+name: "Sample dot net project"
+trigger: master
+stages:
+  - stage: "building"
+    jobs:
+        - job: "Build Web Project"
+          displayName: "Building web/java application"
+          project: src/app1/
+          continueOnError: false
+          steps:
+              - task: Maven@3
+                inputs:
+                  mavenPomFile: 'src/app1/pom.xml'
+                  goals: 'package'
+                  publishJUnitResults: true 
+                  testResultsFiles: '**/surefire-reports/*.xml'
+                  javaHomeOption: 'JDKVersion'
+                  jdkVersionOption: 'default'
+                  codeCoverageFailIfEmpty: true
+              - script: "Invoke Ansible/chef here to publish results to DEV Environment"
+        - job: "Build .Net Project"
+          displayName: "Builing .Net Project"
+          project: src/app2/
+          continueOnError: false
+          steps:
+            - task: DotNetCoreCLI@2
+              inputs:
+                command: 'build' 
+                publishWebProjects: true
+                publishTestResults: true
+                restoreDirectory:
+                  verbosityRestore: 'Detailed'
+                  packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+        - job: "Web API Job"
+          project: src/app3/
+          continueOnError: false
+          steps:
+              - task: Maven@3
+                inputs:
+                  mavenPomFile: 'src/app3/pom.xml'
+                  goals: 'package'
+                  publishJUnitResults: true 
+                  testResultsFiles: '**/surefire-reports/*.xml'
+                  javaHomeOption: 'JDKVersion'
+                  jdkVersionOption: 'default'
+                  codeCoverageFailIfEmpty: true
+              - script: "Invoke Ansible/chef here to publish results to DEV Environment"
